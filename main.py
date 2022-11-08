@@ -4,12 +4,14 @@ import pandas as pd
 import numpy as np
 
 def sort_barcodes(fastq_file, barcode_file):
-    "Docstring"
+    "Takes a fasta file with barcodes and a fastq file with data. Returns a dataframe with barcode indexed columns"
     df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual'])
-    df_BC = pd.DataFrame(pd.read_table(barcode_file, header=None).values.reshape(-1, 2),columns=['ID', 'seq'])
-    cut = df["seq"].str.replace(r'^GCAAAT', "",regex=True) # Removes the barcode if matching to the regular expression
-    df_sorted_by_BC = df.groupby(df_BC["seq"])
-    return print(df_sorted_by_BC)
+    series_seq = pd.Series(df["seq"])
+    with open(barcode_file) as BC:
+        r = BC.read()
+    df_sorted_by_BC = series_seq.str.extractall(r) # use this list as search groups df_BC["seq"].values
+    cut_df = df_sorted_by_BC.str.replace(r'^GCAAAT', "", regex=True)  # Removes the barcode if matching to the regular expression, how can i use this on df?
+    return print(cut_df)
 
 def filter(fastq_file):
     "Docstring"
