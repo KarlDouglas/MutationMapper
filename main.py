@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def sort_barcodes(fastq_file, barcode_file):
+def sort_barcodes(fastq_file):
     "Takes a fasta file with barcodes and a fastq file with data. Returns a dataframe with barcode indexed columns"
     df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual'])
     series_seq = pd.Series(df["seq"])
