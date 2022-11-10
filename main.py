@@ -7,11 +7,21 @@ def sort_barcodes(fastq_file, barcode_file):
     "Takes a fasta file with barcodes and a fastq file with data. Returns a dataframe with barcode indexed columns"
     df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual'])
     series_seq = pd.Series(df["seq"])
-    with open(barcode_file) as BC:
-        r = BC.read()
-    df_sorted_by_BC = series_seq.str.extractall(r) # use this list as search groups df_BC["seq"].values
-    cut_df = df_sorted_by_BC.str.replace(r'^GCAAAT', "", regex=True)  # Removes the barcode if matching to the regular expression, how can i use this on df?
-    return print(cut_df)
+    #with open(barcode_file) as BC:  #How can we use a fsta file as input for what barcodes to sort?
+    #    r = BC.read()
+    df_sorted_by_BC1 = series_seq.str.extractall("(?P<BC1>^GCAAAA.+)").reset_index(drop=True)
+    df_sorted_by_BC2 = series_seq.str.extractall("(?P<BC2>^GCAAAG.+)").reset_index(drop=True)
+    df_sorted_by_BC3 = series_seq.str.extractall("(?P<BC3>^GCAAAC.+)").reset_index(drop=True)
+    df_sorted_by_BC4 = series_seq.str.extractall("(?P<BC4>^GCAAAT.+)").reset_index(drop=True)
+    df_sorted_by_BC5 = series_seq.str.extractall("(?P<BC5>^GCAAGA.+)").reset_index(drop=True)
+    df_sorted_by_BC6 = series_seq.str.extractall("(?P<BC6>^GCAACA.+)").reset_index(drop=True)
+    df_sorted_by_BC7 = series_seq.str.extractall("(?P<BC7>^GCAATA.+)").reset_index(drop=True)
+    df_sorted_by_BC8 = series_seq.str.extractall("(?P<BC8>^GCAGAA.+)").reset_index(drop=True)
+    df_sorted_by_BC9 = series_seq.str.extractall("(?P<BC9>^GCACAAA.+)").reset_index(drop=True)
+    df_sorted_by_BC10 = series_seq.str.extractall("(?P<BC10>^GCATAA.+)").reset_index(drop=True)
+    list_of_dfs = [df_sorted_by_BC1,df_sorted_by_BC2,df_sorted_by_BC3, df_sorted_by_BC4,df_sorted_by_BC5,df_sorted_by_BC6,df_sorted_by_BC7,df_sorted_by_BC8,df_sorted_by_BC9,df_sorted_by_BC10]
+    BC_df = pd.concat(list_of_dfs, axis=1).replace(r'^^[A-Z]{6}', "", regex=True) # Removes the barcode ie. the first six letters of the sequence
+    return print(BC_df)
 
 def filter(fastq_file):
     "Docstring"
@@ -24,7 +34,10 @@ def filter(fastq_file):
 
 def fastq_pair(fastq_file1,fastq_file2):
     "Docstring"
+    df1 = pd.DataFrame(pd.read_table(fastq_file1, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual'])
+    df2 = pd.DataFrame(pd.read_table(fastq_file2, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual'])
 
+    return
 
 def merge_txt_files(file1, file2, file3, name):
     "..."
