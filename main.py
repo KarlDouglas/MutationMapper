@@ -42,14 +42,16 @@ def fastq_pair(fastq_file1,fastq_file2):
     df3 = df1.merge(df2, left_on='read_id', right_on='read_id',suffixes=("1","2")) #merges values if the read id is identical. Each read ID will now have two "seq" and "qual" values
     frames= [df1,df2]
     df4 = pd.concat(frames).drop_duplicates("read_id",keep=False) #concats both dataframes and removes both duplicates
-    return print(df3)
+    return (df3)
 
 def merge(df):
     "takes a dataframe of sequences merged by read_id, returns a dataframe where the two sequences are merged based on overlap"
     seq1 = df["seq1"].to_numpy()
     seq2 = df["seq2"].to_numpy()
-    rev = []
-    #align = pairwise2.align.localms(x,rev,2,-1,-3,-3)
+    rev = Seq(str(seq2)).reverse_complement()
+    alignments = []
+    for (x,y) in zip(seq1,rev):
+        alignments.append(pairwise2.align.localms(x,y,2,-1,-3,-3))
     #consensus = []
     #for seq1,seq2 in zip(align[0][0],align[0][1]):
     #    if seq1 == seq2:
@@ -59,7 +61,7 @@ def merge(df):
     #    elif seq2 == "-":
     #        consensus.append(seq1)
     #sequence = "".join(consensus)
-    return print(rev)
+    return print(alignments)
 def df_to_gzfasta(dataframe):
     "Takes a pd dataframe and returns a gzipped fasta file"
     return
