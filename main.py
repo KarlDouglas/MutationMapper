@@ -47,14 +47,20 @@ def fastq_pair(fastq_file1,fastq_file2):
 def merge(df):
     "takes a dataframe of sequences merged by read_id, returns a dataframe where the two sequences are merged based on overlap"
     seq1 = df["seq1"].to_numpy()
-    seq1.indices
     seq2 = df["seq2"].to_numpy()
-    rev = Seq(str(seq2)).reverse_complement()
-    combined = np.concatenate(seq1,seq2)
+    combined = np.column_stack([seq1,seq2])
+    df1 = df['seq2'].apply(lambda x: Seq(x).reverse_complement()) # works but splitting result up at each base
+
+
+
+    #r = []
+    #for x in combined:
+    #    for y in x[::3]:
+    #        r.append(y)
     #for x,y in zip(seq1,rev):
     #    align = pairwise2.align.localms(seq1,rev,2,-1,-3,-3)
     #align = pairwise2.align.localms(seq1,rev,2,-1,-3,-3)
-    consensus = []
+    #consensus = []
     #for seq1,seq2 in zip(align[0][0],align[0][1]):
     #    if seq1 == seq2:
     #        consensus.append(seq1)
@@ -63,12 +69,9 @@ def merge(df):
     #    elif seq2 == "-":
     #        consensus.append(seq1)
     #sequence = "".join(consensus)
-
-
-
     # alignments = []
     # for (x,y) in zip(seq1,rev):
-    return print(seq1)
+    return print(df1)
 def df_to_gzfasta(dataframe):
     "Takes a pd dataframe and returns a gzipped fasta file"
     return
