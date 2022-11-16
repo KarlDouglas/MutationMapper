@@ -6,53 +6,64 @@ from Bio.Seq import Seq
 from Bio import pairwise2
 from Bio.pairwise2 import format_alignment
 
-def sort_barcodes(fastq_file):
-    "Takes a fasta file with barcodes and a fastq file with data. Returns a dataframe with barcode indexed columns"
-    df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual'])
-    series_seq = pd.Series(df["seq"])
-    #with open(barcode_file) as BC:  #How can we use a fsta file as input for what barcodes to sort?
-    #    r = BC.read()
-    df_sorted_by_BC1 = series_seq.str.extractall("(?P<BC1>^GCAAAA.+)").reset_index(drop=True)
-    df_sorted_by_BC2 = series_seq.str.extractall("(?P<BC2>^GCAAAG.+)").reset_index(drop=True)
-    df_sorted_by_BC3 = series_seq.str.extractall("(?P<BC3>^GCAAAC.+)").reset_index(drop=True)
-    df_sorted_by_BC4 = series_seq.str.extractall("(?P<BC4>^GCAAAT.+)").reset_index(drop=True)
-    df_sorted_by_BC5 = series_seq.str.extractall("(?P<BC5>^GCAAGA.+)").reset_index(drop=True)
-    df_sorted_by_BC6 = series_seq.str.extractall("(?P<BC6>^GCAACA.+)").reset_index(drop=True)
-    df_sorted_by_BC7 = series_seq.str.extractall("(?P<BC7>^GCAATA.+)").reset_index(drop=True)
-    df_sorted_by_BC8 = series_seq.str.extractall("(?P<BC8>^GCAGAA.+)").reset_index(drop=True)
-    df_sorted_by_BC9 = series_seq.str.extractall("(?P<BC9>^GCACAAA.+)").reset_index(drop=True)
-    df_sorted_by_BC10 = series_seq.str.extractall("(?P<BC10>^GCATAA.+)").reset_index(drop=True)
-    list_of_dfs = [df_sorted_by_BC1,df_sorted_by_BC2,df_sorted_by_BC3, df_sorted_by_BC4,df_sorted_by_BC5,df_sorted_by_BC6,df_sorted_by_BC7,df_sorted_by_BC8,df_sorted_by_BC9,df_sorted_by_BC10]
-    BC_df = pd.concat(list_of_dfs, axis=1).replace(r'^^[A-Z]{6}', "", regex=True) # Removes the barcode ie. the first six letters of the sequence
-    return print(BC_df)
+def mask(fastq_file):
+    "Takes a fastq file and returns a pandas dataframe with the values, basecalls with a phredscore under 30 are masked with 'N'"
+    df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4), columns = ['read_id', 'seq','+', 'qual']).drop(columns="+") # reads a fastq file into a dataframe where each entry is indexed at the column as read_id,seq and qual
+    df_qual = df["qual"].str.split(pat="",expand=True) # splitting the quality into each individual charecter to assess their value
+    df_seq = df["seq"].str.split(pat="",expand=True).fillna("") # splitting the sequence into each individual charecters, filling the gaps of shorter sequences with empty strings
+    phred_30_df = df_qual.replace(["!",'"',"#","$","%","&","'","(",")","*","+",",","-",".","/","0","1","2","3","4","5","6","7","8","9",":",";","<","=",">"],value = "N") #
+    masked_sequence_df =df_seq.iloc[:,7:].mask(phred_30_df == "N","N") # maks base calls with a phred score of 30 or lower, disregards the first 6 basecalls (the barcode)
+    frames = [df_seq.iloc[:,:7],masked_sequence_df] #joins the barcode and the masked sequence
+    x = pd.concat(frames,axis=1) #joins the barcode and the masked sequence
+    df["seq"] = x.apply((lambda x: "".join(x)),axis=1) # why are random N's added to the shorter sequences?
+    return df
 
-def filter(fastq_file):
+def fastq_pair(df1,df2):
     "Docstring"
-    df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4), columns = ['read_id', 'seq','+', 'qual'])
-    df_qual = df["qual"].str.split(pat="",expand=True)
-    df_seq = df["seq"].str.split(pat="",expand=True)
-    phred_30_df = df_qual.replace(["!",'"',"#","$","%","&","'","(",")","*","+",",","-",".","/","0","1","2","3","4","5","6","7","8","9",":",";","<","=",">"],value = "N")
-    masked_sequence_df = df_seq.mask(phred_30_df == "N","N")
-    return (masked_sequence_df)
-
-def fastq_pair(fastq_file1,fastq_file2):
-    "Docstring"
-    df1 = pd.DataFrame(pd.read_table(fastq_file1, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual']).drop("+",axis=1)
-    df2 = pd.DataFrame(pd.read_table(fastq_file2, header=None).values.reshape(-1, 4),columns=['read_id', 'seq', '+', 'qual']).drop("+",axis=1)
     df3 = df1.merge(df2, left_on='read_id', right_on='read_id',suffixes=("1","2")) #merges values if the read id is identical. Each read ID will now have two "seq" and "qual" values
     frames= [df1,df2]
     df4 = pd.concat(frames).drop_duplicates("read_id",keep=False) #concats both dataframes and removes both duplicates
-    return (df3)
+    return df3
+
+def sort_barcodes(df):
+    "Takes a fasta file with barcodes and a fastq file with data. Returns a dataframe with barcode indexed columns"
+    series_seq = pd.Series(df["seq1"])
+    series_seq2 = pd.Series(df["seq2"])
+    df_sorted_by_BC1 = series_seq.str.extractall("(?P<BC1_1>^GCAAAA.+)").reset_index(drop=True)
+    df_sorted_by_BC2 = series_seq.str.extractall("(?P<BC2_1>^GCAAAG.+)").reset_index(drop=True)
+    df_sorted_by_BC3 = series_seq.str.extractall("(?P<BC3_1>^GCAAAC.+)").reset_index(drop=True)
+    df_sorted_by_BC4 = series_seq.str.extractall("(?P<BC4_1>^GCAAAT.+)").reset_index(drop=True)
+    df_sorted_by_BC5 = series_seq.str.extractall("(?P<BC5_1>^GCAAGA.+)").reset_index(drop=True)
+    df_sorted_by_BC6 = series_seq.str.extractall("(?P<BC6_1>^GCAACA.+)").reset_index(drop=True)
+    df_sorted_by_BC7 = series_seq.str.extractall("(?P<BC7_1>^GCAATA.+)").reset_index(drop=True)
+    df_sorted_by_BC8 = series_seq.str.extractall("(?P<BC8_1>^GCAGAA.+)").reset_index(drop=True)
+    df_sorted_by_BC9 = series_seq.str.extractall("(?P<BC9_1>^GCACAAA.+)").reset_index(drop=True)
+    df_sorted_by_BC10 = series_seq.str.extractall("(?P<BC10_1>^GCATAA.+)").reset_index(drop=True)
+    df_sorted_by_BC1_2 = series_seq2.str.extractall("(?P<BC1_2>^GCAAAA.+)").reset_index(drop=True)
+    df_sorted_by_BC2_2 = series_seq2.str.extractall("(?P<BC2_2>^GCAAAG.+)").reset_index(drop=True)
+    df_sorted_by_BC3_2 = series_seq2.str.extractall("(?P<BC3_2>^GCAAAC.+)").reset_index(drop=True)
+    df_sorted_by_BC4_2 = series_seq2.str.extractall("(?P<BC4_2>^GCAAAT.+)").reset_index(drop=True)
+    df_sorted_by_BC5_2 = series_seq2.str.extractall("(?P<BC5_2>^GCAAGA.+)").reset_index(drop=True)
+    df_sorted_by_BC6_2 = series_seq2.str.extractall("(?P<BC6_2>^GCAACA.+)").reset_index(drop=True)
+    df_sorted_by_BC7_2 = series_seq2.str.extractall("(?P<BC7_2>^GCAATA.+)").reset_index(drop=True)
+    df_sorted_by_BC8_2 = series_seq2.str.extractall("(?P<BC8_2>^GCAGAA.+)").reset_index(drop=True)
+    df_sorted_by_BC9_2 = series_seq2.str.extractall("(?P<BC9_2>^GCACAAA.+)").reset_index(drop=True)
+    df_sorted_by_BC10_2 = series_seq2.str.extractall("(?P<BC10_2>^GCATAA.+)").reset_index(drop=True)
+    list_of_dfs = [df_sorted_by_BC1,df_sorted_by_BC1_2,df_sorted_by_BC2,df_sorted_by_BC2_2,df_sorted_by_BC3,df_sorted_by_BC3_2, df_sorted_by_BC4,df_sorted_by_BC4_2,df_sorted_by_BC5,df_sorted_by_BC5_2,df_sorted_by_BC6,df_sorted_by_BC6_2,df_sorted_by_BC7,df_sorted_by_BC7_2,df_sorted_by_BC8,df_sorted_by_BC8_2,df_sorted_by_BC9,df_sorted_by_BC9_2,df_sorted_by_BC10,df_sorted_by_BC10_2]
+    BC_df = pd.concat(list_of_dfs, axis=1).replace(r'^^[A-Z]{6}', "", regex=True) # Removes the barcode ie. the first six letters of the sequence
+    return BC_df
 
 def merge(df):
     "takes a dataframe of sequences merged by read_id, returns a dataframe where the two sequences are merged based on overlap"
-    seq1 = df["seq1"].to_numpy()
-    seq2 = df["seq2"].to_numpy()
+    seq1 = df["BC1_1"].to_numpy()
+    seq2 = df["BC1_2"].to_numpy()
     combined = np.column_stack([seq1,seq2])
-    df1 = df['seq2'].apply(lambda x: Seq(x).reverse_complement()) # works but splitting result up at each base
+    combined[:,1] = (lambda x: Seq(x).reverse_complement())
 
-
-
+    df["rev"] = df["BC1_2"].apply(lambda x: Seq(x).reverse_complement()) # better code but, but splits result up at each base
+    df["rev"].apply((lambda x: "".join(x)))
+    #for i in combined[:,1]:
+    #    rev.append(Seq(i).reverse_complement())
     #r = []
     #for x in combined:
     #    for y in x[::3]:
@@ -71,7 +82,7 @@ def merge(df):
     #sequence = "".join(consensus)
     # alignments = []
     # for (x,y) in zip(seq1,rev):
-    return print(df1)
+    return print(df["rev"])
 def df_to_gzfasta(dataframe):
     "Takes a pd dataframe and returns a gzipped fasta file"
     return
