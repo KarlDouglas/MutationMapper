@@ -2,7 +2,6 @@ import re
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from Bio.Seq import Seq
 from Bio import pairwise2
 from Bio.pairwise2 import format_alignment
 
@@ -19,7 +18,7 @@ def mask(fastq_file):
     return df
 
 def fastq_pair(df1,df2):
-    "Docstring"
+    "Takes two dataframes of NGS data, returns a dataframe where identical @ID's are matched, and a dataframe where all non-paired values are stored"
     df3 = df1.merge(df2, left_on='read_id', right_on='read_id',suffixes=("1","2")) #merges values if the read id is identical. Each read ID will now have two "seq" and "qual" values
     frames= [df1,df2]
     df4 = pd.concat(frames).drop_duplicates("read_id",keep=False) #concats both dataframes and removes both duplicates
@@ -55,34 +54,24 @@ def sort_barcodes(df):
 
 def merge(df):
     "takes a dataframe of sequences merged by read_id, returns a dataframe where the two sequences are merged based on overlap"
-    seq1 = df["BC1_1"].to_numpy()
-    seq2 = df["BC1_2"].to_numpy()
-    combined = np.column_stack([seq1,seq2])
-    combined[:,1] = (lambda x: Seq(x).reverse_complement())
-
-    df["rev"] = df["BC1_2"].apply(lambda x: Seq(x).reverse_complement()) # better code but, but splits result up at each base
-    df["rev"].apply((lambda x: "".join(x)))
-    #for i in combined[:,1]:
-    #    rev.append(Seq(i).reverse_complement())
-    #r = []
-    #for x in combined:
-    #    for y in x[::3]:
-    #        r.append(y)
-    #for x,y in zip(seq1,rev):
-    #    align = pairwise2.align.localms(seq1,rev,2,-1,-3,-3)
-    #align = pairwise2.align.localms(seq1,rev,2,-1,-3,-3)
-    #consensus = []
-    #for seq1,seq2 in zip(align[0][0],align[0][1]):
-    #    if seq1 == seq2:
-    #        consensus.append(seq1)
-    #    elif seq1 =="-":
-    #        consensus.append(seq2)
-    #    elif seq2 == "-":
-    #        consensus.append(seq1)
-    #sequence = "".join(consensus)
-    # alignments = []
-    # for (x,y) in zip(seq1,rev):
-    return print(df["rev"])
+    df["BC1_2"] = df["BC1_2"].apply(lambda x: x[::-1])
+    split = df["BC1_2"].str.split(pat="", expand=True)
+    complemented = split.replace({"G":"C","C":"G","A":"T","T":"A"})
+    df["BC1_2"] = complemented.apply((lambda x: "".join(x)), axis=1) # How to apply this on all "_2" suffixes?
+    sequence = []
+    for seq,rev in zip(df["BC1_1"],df["BC1_2"]):
+        alignments = (pairwise2.align.localms(seq,rev,2,-1,-3,-3))
+        consensus = []
+        for s1,s2 in zip(alignments[0][0],alignments[0][1]):
+            if s1 == s2:
+                consensus.append(s1)
+            elif s1 == "-":
+                consensus.append(s2)
+            elif s2 == "-":
+                consensus.append(s1)
+            con = "".join(consensus)
+        sequence.append(con)
+    return print(sequence)
 def df_to_gzfasta(dataframe):
     "Takes a pd dataframe and returns a gzipped fasta file"
     return
