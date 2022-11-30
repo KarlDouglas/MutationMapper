@@ -1,21 +1,19 @@
 import re
 import matplotlib.pyplot as plt
 import pandas as pd
-from Bio import pairwise2
-from Bio.pairwise2 import format_alignment
 
 
 def mask(fastq_file):
     """Takes a fastq file and returns a pandas dataframe with the values, basecalls with a phredscore under 30 are masked with 'N' """
-    df = pd.DataFrame(pd.read_table(fastq_file, header=None, comment=" ",).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual']).drop(columns="+")  # reads a fastq file into a dataframe where each entry is indexed at the column as read_id,seq and qual
+    df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual']).drop(columns="+")  # reads a fastq file into a dataframe where each entry is indexed at the column as read_id,seq and qual
     df_qual = df["qual"].str.split(pat="", expand=True)  # splitting the quality into each individual charecter to assess their value
-    df_seq = df["seq"].str.split(pat="", expand=True).fillna("") # splitting the sequence into each individual charecters, filling the gaps of shorter sequences with empty strings
+    df_seq = df["seq"].str.split(pat="", expand=True).fillna("")  # splitting the sequence into each individual charecters, filling the gaps of shorter sequences with empty strings
     phred_30_df = df_qual.replace(["!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">"], value = "N") #
     masked_sequence_df = df_seq.iloc[:, 7:].mask(phred_30_df == "N", "N")  # maks base calls with a phred score of 30 or lower, disregards the first 6 basecalls (the barcode)
     frames = [df_seq.iloc[:, :7], masked_sequence_df]  # joins the barcode and the masked sequence
     x = pd.concat(frames, axis=1)  # joins the barcode and the masked sequence
     df["seq"] = x.apply((lambda x: "".join(x)), axis=1)  # why are random N's added to the shorter sequences?
-    return (df)
+    return df
 
 
 def sort_barcodes(df1,df2):
@@ -42,12 +40,27 @@ def sort_barcodes(df1,df2):
     df_sorted_by_BC8_2 = series_seq2.str.extractall("(?P<BC8>^GCAGAA.+)").reset_index(drop=True)
     df_sorted_by_BC9_2 = series_seq2.str.extractall("(?P<BC9>^GCACAAA.+)").reset_index(drop=True)
     df_sorted_by_BC10_2 = series_seq2.str.extractall("(?P<BC10>^GCATAA.+)").reset_index(drop=True)
-    list_of_dfs = [df_sorted_by_BC1,df_sorted_by_BC1_2,df_sorted_by_BC2,df_sorted_by_BC2_2,df_sorted_by_BC3,df_sorted_by_BC3_2, df_sorted_by_BC4,df_sorted_by_BC4_2,df_sorted_by_BC5,df_sorted_by_BC5_2,df_sorted_by_BC6,df_sorted_by_BC6_2,df_sorted_by_BC7,df_sorted_by_BC7_2,df_sorted_by_BC8,df_sorted_by_BC8_2,df_sorted_by_BC9,df_sorted_by_BC9_2,df_sorted_by_BC10,df_sorted_by_BC10_2]
-    BC_df = pd.concat(list_of_dfs, axis=1).replace(r'^^[A-Z]{6}', "", regex=True) # Removes the barcode ie. the first six letters of the sequence
     combined_BC1 = pd.concat([df_sorted_by_BC1,df_sorted_by_BC1_2],axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC1 = combined_BC1["BC1"].values.tolist()# change to output all barcodes like this
-    return (BC1)
-
+    BC1 = combined_BC1["BC1"].values.tolist()
+    combined_BC2 = pd.concat([df_sorted_by_BC2, df_sorted_by_BC2_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC2 = combined_BC2["BC2"].values.tolist()
+    combined_BC3 = pd.concat([df_sorted_by_BC3, df_sorted_by_BC3_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC3 = combined_BC3["BC3"].values.tolist()
+    combined_BC4 = pd.concat([df_sorted_by_BC4, df_sorted_by_BC4_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC4 = combined_BC4["BC4"].values.tolist()
+    combined_BC5 = pd.concat([df_sorted_by_BC5, df_sorted_by_BC5_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC5 = combined_BC5["BC5"].values.tolist()
+    combined_BC6 = pd.concat([df_sorted_by_BC6, df_sorted_by_BC6_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC6 = combined_BC6["BC6"].values.tolist()
+    combined_BC7 = pd.concat([df_sorted_by_BC7, df_sorted_by_BC7_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC7 = combined_BC7["BC7"].values.tolist()
+    combined_BC8 = pd.concat([df_sorted_by_BC8, df_sorted_by_BC8_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC8 = combined_BC8["BC8"].values.tolist()
+    combined_BC9 = pd.concat([df_sorted_by_BC9, df_sorted_by_BC9_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC9 = combined_BC9["BC9"].values.tolist()
+    combined_BC10 = pd.concat([df_sorted_by_BC10, df_sorted_by_BC10_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
+    BC10 = combined_BC10["BC10"].values.tolist()
+    return [BC1,BC2,BC3,BC4,BC5,BC6,BC7,BC8,BC9,BC10]
 
 
 def write_file(list_of_sequences, filename):
@@ -55,7 +68,18 @@ def write_file(list_of_sequences, filename):
     with open(filename, "w") as outfile:
         for i in list_of_sequences:
             outfile.write(i+"\n")
-    return print(list_of_sequences)
+    return (list_of_sequences)
+
+
+def merge_txt_files(file1, file2, file3, name):
+    "..."
+    filenames = file1, file2, file3
+    with open(name, "w") as outfile:
+        for filename in filenames:
+            with open(filename) as infile:
+                contents = infile.read()
+                outfile.write(contents)
+    return name
 
 
 def count_depth(file):
@@ -98,7 +122,10 @@ def calculate_mutations(dict, depth):
         list_of_nucleotides = dict_of_nucleotides.values()
         wt = max(list_of_nucleotides)
         mutations = sum(list_of_nucleotides)-wt
-        mutation_percentage = [mutations/sum(list_of_nucleotides)]
+        try:
+            mutation_percentage = [mutations/sum(list_of_nucleotides)]
+        except:
+            mutation_percentage = 0
         if wt > 0.1*depth and position not in dict_of_mutation_percentages:
             dict_of_mutation_percentages[position] = mutation_percentage
     return dict_of_mutation_percentages
