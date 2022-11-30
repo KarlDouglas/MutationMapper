@@ -7,3 +7,6 @@ To use the NGS pipeline run following commands
 3: Give permission to run the two shell scripts: chmod +x run.sh && chmod +x run2.sh
 4: Run the script: sbatch run.sh
 thats it! The script will make a directory named data where the result will be deposited
+
+note: The script takes a while to run on a full dataset. if you want to test the pipeline oyu can copy a subset of the data eg. 100.000 lines using command: sed -n '1,100000p' "infile" > "outfile"
+
