@@ -2,7 +2,6 @@ import re
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 def mask(fastq_file):
     """Takes a fastq file and returns a pandas dataframe with the values, basecalls with a phredscore under 30 are masked with 'N' """
     df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual']).drop(columns="+")  # reads a fastq file into a dataframe where each entry is indexed at the column as read_id,seq and qual
@@ -63,6 +62,7 @@ def sort_barcodes(df1,df2):
     return [BC1,BC2,BC3,BC4,BC5,BC6,BC7,BC8,BC9,BC10]
 
 
+
 def write_file(list_of_sequences, filename):
     """Takes a list of sequences and a filename as a string, returns a fastafile"""
     with open(filename, "w") as outfile:
@@ -95,9 +95,12 @@ def count_nucleotides(f_reads):
     input_file = open(f_reads)
     lines = input_file.readlines()
     for line in lines:
-        elements = re.split("\s", line)  #splits alignment position from mutations
+        elements = re.split("\s+", line)  #splits alignment position from mutations
         alignment_position = elements[3]
         sequence = elements[9]
+        indel = elements[14][5:]
+        if int(indel) >= 1:
+            continue
         for nucleotide in enumerate(sequence): #enumerate to keep track of the alignment position
             position = int(alignment_position)+nucleotide[0]
             if position not in dict_of_nucleotide_positions:
@@ -126,7 +129,7 @@ def calculate_mutations(dict, depth):
             mutation_percentage = [mutations/sum(list_of_nucleotides)]
         except:
             mutation_percentage = 0
-        if wt > 0.1*depth and position not in dict_of_mutation_percentages:
+        if wt > 0.01*depth and position not in dict_of_mutation_percentages:
             dict_of_mutation_percentages[position] = mutation_percentage
     return dict_of_mutation_percentages
 
@@ -247,3 +250,44 @@ def plot_mutation_base_proberbility(dict):
         plt.bar(x1, y1, color=["blue", "green", "orange", "red"])
         plt.tight_layout()
         return
+
+    
+def mutation_per_read(bowtie_output):
+    """Docstring"""
+    list_of_mismatches = []
+    out = []
+    input_file = open(bowtie_output)
+    lines = input_file.readlines()
+    for line in lines:
+        elements = re.split("\s+", line)  #splits alignment position from mutations
+        seq = elements[9]
+        total_mismatches = elements[13][5:]
+        N = 0
+        for i in seq:
+            if i == "N":
+                N += 1
+        real_mismatches = int(total_mismatches)-N
+        list_of_mismatches.append(real_mismatches)
+    out.append(list_of_mismatches.count(0))
+    out.append(list_of_mismatches.count(1))
+    out.append(list_of_mismatches.count(2))
+    out.append(list_of_mismatches.count(3))
+    out.append(list_of_mismatches.count(4))
+    out.append(list_of_mismatches.count(5))
+    out.append(list_of_mismatches.count(6))
+    out.append(list_of_mismatches.count(7))
+    out.append(list_of_mismatches.count(8))
+    out.append(list_of_mismatches.count(9))
+    return out
+
+
+def CSV(dict_mutations,filename,depth,total_mutations,mm_per_read):
+    """takes a file and returns a csv file"""
+    with open(filename, "w") as outfile:
+        outfile.write("sequence depth "+str(depth)+"\n")
+        outfile.write(("Nucleotides counted, Mutations counted, mutation frequency: "+str(total_mutations)+"\n"))
+        outfile.write("Base position[mutation frequency] ")
+        for k,v in sorted(dict_mutations.items()):
+            outfile.write(str(k)+str(v)+" ")
+        outfile.write("\n"+"Mismatches per read 0-9 "+str(mm_per_read))
+    return 
