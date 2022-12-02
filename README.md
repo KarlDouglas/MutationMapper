@@ -10,3 +10,6 @@ thats it! The script will make a directory named data where the result will be d
 
 note: The script takes a while to run on a full dataset. if you want to test the pipeline oyu can copy a subset of the data eg. 100.000 lines using command: sed -n '1,100000p' "infile" > "outfile"
 
+
+Note on development.
+If you want to tweak the parameters of the data analysis you mainly want to focus on the mian.py file as the functions are actually written here. The other python files simply calls on different functions from this file. 
