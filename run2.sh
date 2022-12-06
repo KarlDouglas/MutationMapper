@@ -28,7 +28,8 @@ bowtie2 -x leu2TAG -r BC8_sorted -S BC8_aligned --no-unal --np 0 -L 10 -N 1 --no
 bowtie2 -x leu2TAG -r BC9_sorted -S BC9_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
 bowtie2 -x leu2TAG -r BC10_sorted -S BC10_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
 python commands2.py
-mkdir data
-find /home/ptc872_ku_dk/modi_mount/Seq_analysis -iname '*.png' -exec mv '{}' /home/ptc872_ku_dk/modi_mount/Seq_analysis/data \;
+rm -rf data # clears the directory with data
+mkdir data # makes a directory to store the data
+find /home/ptc872_ku_dk/modi_mount/Seq_analysis -iname '*.png' -exec mv '{}' /home/ptc872_ku_dk/modi_mount/Seq_analysis/data \; #find all .png files and stores in data
 
 date
