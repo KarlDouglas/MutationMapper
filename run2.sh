@@ -17,16 +17,16 @@ conda install -c bioconda bowtie2
 bowtie2-build -c ATGTCTGCCCCTAAGAAGATCGTCGTTTTGCCAGGTGACCACGTTGGTCAAGAAATCACAGCCGAAGCCATTAAGGTTCTTAAAGCTATTTCTGATGTTCGTTCCAATGTCAAGTTCGATTTCGAAAATCATTTAATTGGTGGTGCTGCTATCGATGCTACAGGTGTTCCACTTCCAGATGAGGCGCTGGAAGCCTCCAAGAAGGCTGATGCCGTTTTGTTAGGTGCTGTGGGTGGTCCTAAATGGGGTACCGGTAGTGTTAGACCTGAACAAGGTTTACTAAAAATCCGTAAAGAACTTCAATTGTACGCCAACTTAAGACCATGTAACTTTGCATCCGACTCTCTTTTAGACTTATCTCCAATCAAGCCACAATTTGCTAAAGGTACTGACTTCGTTGTTGTCAGAGAATTAGTGGGAGGTATTTACTTTGGTAAGAGAAAGGAAGACGATGGTGATGGTGTCGCTTGGGATAGTGAACAATACACCGTTCCAGAAGTGCAAAGAATCACAAGAATGGCCGCTTTCATGGCCCTATAGCATGAGCCACCATTGCCTATTTGGTCCTTGGATAAAGCTAATGTTTTGGCCTCTTCAAGATTATGGAGAAAAACTGTGGAGGAAACCATCAAGAACGAATTCCCTACATTGAAGGTTCAACATCAATTGATTGATTCTGCCGCCATGATCCTAGTTAAGAACCCAACCCACCTAAATGGTATTATAATCACCAGCAACATGTTTGGTGATATCATCTCCGATGAAGCCTCCGTTATCCCAGGTTCCTTGGGTTTGTTGCCATCTGCGTCCTTGGCCTCTTTGCCAGACAAGAACACCGCATTTGGTTTGTACGAACCATGCCACGGTTCTGCTCCAGATTTGCCAAAGAATAAGGTCAACCCTATCGCCACTATCTTGTCTGCTGCAATGATGTTGAAATTGTCATTGAACTTGCCTGAAGAAGGTAAGGCCATTGAAGATGCAGTTAAAAAGGTTTTGGATGCAGGTATCAGAACTGGTGATTTAGGTGGTTCCAACAGTACCACCGAAGTCGGTGATGCTGTCGCCGAAGAAGTTAAGAAAATCCTTGCTTAA leu2TAG
 
 python commands.py
-bowtie2 -x leu2TAG -r BC1_sorted -S BC1_aligned --no-unal --np 0 -L 20 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC2_sorted -S BC2_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC3_sorted -S BC3_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC4_sorted -S BC4_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC5_sorted -S BC5_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC6_sorted -S BC6_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC7_sorted -S BC7_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC8_sorted -S BC8_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC9_sorted -S BC9_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
-bowtie2 -x leu2TAG -r BC10_sorted -S BC10_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_1.txt -S BC1_aligned --no-unal --np 0 -L 20 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_2.txt -S BC2_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_3.txt -S BC3_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_4.txt -S BC4_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_5.txt -S BC5_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_6.txt -S BC6_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_7.txt -S BC7_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_8.txt -S BC8_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_9xt -S BC9_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
+bowtie2 -x leu2TAG -r BC_10txt -S BC10_aligned --no-unal --np 0 -L 10 -N 1 --no-hd
 python commands2.py
 rm -rf data # clears the directory with data
 mkdir data # makes a directory to store the data
