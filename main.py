@@ -2,73 +2,39 @@ import re
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def mask(fastq_file):
-    """Takes a fastq file and returns a pandas dataframe with the values, basecalls with a phredscore under 30 are masked with 'N' """
-    df = pd.DataFrame(pd.read_table(fastq_file, header=None).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual']).drop(columns="+")  # reads a fastq file into a dataframe where each entry is indexed at the column as read_id,seq and qual
-    df_qual = df["qual"].str.split(pat="", expand=True)  # splitting the quality into each individual charecter to assess their value
-    df_seq = df["seq"].str.split(pat="", expand=True).fillna("")  # splitting the sequence into each individual charecters, filling the gaps of shorter sequences with empty strings
-    phred_30_df = df_qual.replace(["!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">"], value = "N") #
+def mask(fastq_file1,fastq_file2):
+    """Takes two fastq files and returns a pandas dataframe with the values,
+     base-calls with a phredscore under 30 are masked with 'N' """
+    df = pd.DataFrame(pd.read_table(fastq_file1, header=None).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual']).drop(columns="+") # reads a fastq file into a dataframe where each entry is indexed at the column as read_id,seq and qual
+    df2 = pd.DataFrame(pd.read_table(fastq_file2, header=None).values.reshape(-1, 4), columns=['read_id', 'seq', '+', 'qual']).drop(columns="+")
+    df3 = pd.concat([df,df2],axis=0)
+    df_qual = df3["qual"].str.split(pat="", expand=True)  # splitting the quality into each individual charecter to assess their value
+    df_seq = df3["seq"].str.split(pat="", expand=True).fillna("")  # splitting the sequence into each individual charecters, filling the gaps of shorter sequences with empty strings
+    phred_30_df = df_qual.replace(["!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6","7", "8", "9", ":", ";", "<", "=", ">"], value="N")  # Determines what charecters should be masked with an N
     masked_sequence_df = df_seq.iloc[:, 7:].mask(phred_30_df == "N", "N")  # maks base calls with a phred score of 30 or lower, disregards the first 6 basecalls (the barcode)
     frames = [df_seq.iloc[:, :7], masked_sequence_df]  # joins the barcode and the masked sequence
     x = pd.concat(frames, axis=1)  # joins the barcode and the masked sequence
-    df["seq"] = x.apply((lambda x: "".join(x)), axis=1)  # why are random N's added to the shorter sequences?
-    return df
+    df3["seq"] = x.apply((lambda x: "".join(x)), axis=1)  # why are random N's added to the shorter sequences?
+    return df3
 
 
-def sort_barcodes(df1,df2):
-    """Takes a fasta file with barcodes and a fastq file with data. Returns a dataframe with barcode indexed columns"""
-    series_seq = pd.Series(df1["seq"])
-    series_seq2 = pd.Series(df2["seq"])
-    df_sorted_by_BC1 = series_seq.str.extractall("(?P<BC1>^GCAAAA.+)").reset_index(drop=True)
-    df_sorted_by_BC2 = series_seq.str.extractall("(?P<BC2>^GCAAAG.+)").reset_index(drop=True)
-    df_sorted_by_BC3 = series_seq.str.extractall("(?P<BC3>^GCAAAC.+)").reset_index(drop=True)
-    df_sorted_by_BC4 = series_seq.str.extractall("(?P<BC4>^GCAAAT.+)").reset_index(drop=True)
-    df_sorted_by_BC5 = series_seq.str.extractall("(?P<BC5>^GCAAGA.+)").reset_index(drop=True)
-    df_sorted_by_BC6 = series_seq.str.extractall("(?P<BC6>^GCAACA.+)").reset_index(drop=True)
-    df_sorted_by_BC7 = series_seq.str.extractall("(?P<BC7>^GCAATA.+)").reset_index(drop=True)
-    df_sorted_by_BC8 = series_seq.str.extractall("(?P<BC8>^GCAGAA.+)").reset_index(drop=True)
-    df_sorted_by_BC9 = series_seq.str.extractall("(?P<BC9>^GCACAAA.+)").reset_index(drop=True)
-    df_sorted_by_BC10 = series_seq.str.extractall("(?P<BC10>^GCATAA.+)").reset_index(drop=True)
-    df_sorted_by_BC1_2 = series_seq2.str.extractall("(?P<BC1>^GCAAAA.+)").reset_index(drop=True)
-    df_sorted_by_BC2_2 = series_seq2.str.extractall("(?P<BC2>^GCAAAG.+)").reset_index(drop=True)
-    df_sorted_by_BC3_2 = series_seq2.str.extractall("(?P<BC3>^GCAAAC.+)").reset_index(drop=True)
-    df_sorted_by_BC4_2 = series_seq2.str.extractall("(?P<BC4>^GCAAAT.+)").reset_index(drop=True)
-    df_sorted_by_BC5_2 = series_seq2.str.extractall("(?P<BC5>^GCAAGA.+)").reset_index(drop=True)
-    df_sorted_by_BC6_2 = series_seq2.str.extractall("(?P<BC6>^GCAACA.+)").reset_index(drop=True)
-    df_sorted_by_BC7_2 = series_seq2.str.extractall("(?P<BC7>^GCAATA.+)").reset_index(drop=True)
-    df_sorted_by_BC8_2 = series_seq2.str.extractall("(?P<BC8>^GCAGAA.+)").reset_index(drop=True)
-    df_sorted_by_BC9_2 = series_seq2.str.extractall("(?P<BC9>^GCACAAA.+)").reset_index(drop=True)
-    df_sorted_by_BC10_2 = series_seq2.str.extractall("(?P<BC10>^GCATAA.+)").reset_index(drop=True)
-    combined_BC1 = pd.concat([df_sorted_by_BC1,df_sorted_by_BC1_2],axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC1 = combined_BC1["BC1"].values.tolist()
-    combined_BC2 = pd.concat([df_sorted_by_BC2, df_sorted_by_BC2_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC2 = combined_BC2["BC2"].values.tolist()
-    combined_BC3 = pd.concat([df_sorted_by_BC3, df_sorted_by_BC3_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC3 = combined_BC3["BC3"].values.tolist()
-    combined_BC4 = pd.concat([df_sorted_by_BC4, df_sorted_by_BC4_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC4 = combined_BC4["BC4"].values.tolist()
-    combined_BC5 = pd.concat([df_sorted_by_BC5, df_sorted_by_BC5_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC5 = combined_BC5["BC5"].values.tolist()
-    combined_BC6 = pd.concat([df_sorted_by_BC6, df_sorted_by_BC6_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC6 = combined_BC6["BC6"].values.tolist()
-    combined_BC7 = pd.concat([df_sorted_by_BC7, df_sorted_by_BC7_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC7 = combined_BC7["BC7"].values.tolist()
-    combined_BC8 = pd.concat([df_sorted_by_BC8, df_sorted_by_BC8_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC8 = combined_BC8["BC8"].values.tolist()
-    combined_BC9 = pd.concat([df_sorted_by_BC9, df_sorted_by_BC9_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC9 = combined_BC9["BC9"].values.tolist()
-    combined_BC10 = pd.concat([df_sorted_by_BC10, df_sorted_by_BC10_2], axis=0).replace(r'^^[A-Z]{6}', "", regex=True)
-    BC10 = combined_BC10["BC10"].values.tolist()
-    return [BC1,BC2,BC3,BC4,BC5,BC6,BC7,BC8,BC9,BC10]
+def sort_barcodes(df,barcodes):
+    """Takes a dataframe where sequences("seq") are stored in one column. Returns a list of each barcode with a list of each sequence where the barcode is trimemd"""
+    sorted_sequences = []
+    for barcode in barcodes:
+        sequences = df.loc[df["seq"].str.startswith(barcode), "seq"].tolist()
+        sorted_sequences.append(sequences)
+    return sorted_sequences
 
 
 
-def write_file(list_of_sequences, filename):
-    """Takes a list of sequences and a filename as a string, returns a fastafile"""
-    with open(filename, "w") as outfile:
-        for i in list_of_sequences:
-            outfile.write(i+"\n")
-    return (list_of_sequences)
+def write_file(list_of_sequences):
+    """Takes a list of lists of sequences, returns a txt file with a sequnce on each line for each list with sequneces"""
+    for index, lst in enumerate(list_of_sequences):
+        with open("BC_{}.txt".format(index), "w") as f:
+            for element in lst:
+                f.write("{}\n".format(element))
+    return
 
 
 def merge_txt_files(file1, file2, file3, name):
