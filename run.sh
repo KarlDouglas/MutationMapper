@@ -4,4 +4,4 @@
 #SBATCH --mem=250gb                   # Job memory request
 #SBATCH --time=02:00:00               # Time limit hrs:min:sec
 #SBATCH --output=serial_test_%j.log   # Standard output and error log
-srun singularity exec ~/modi_images/slurm-notebook-latest.sif ~/modi_mount/NGS_pipeline/run.sh
+srun singularity exec ~/modi_images/slurm-notebook-latest.sif ~/modi_mount/MutationMapper/run.sh
